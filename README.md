@@ -27,15 +27,15 @@ I started this project with the hypothesis that we could use Generative AI to cr
 
 I used three different formats: debate, listicle, and explainer.
 
-### Debate Videos
+### Debate Videos ([Playlist](https://www.youtube.com/playlist?list=PLbNdqC_BkyEBEXRu6a8G2TKucW1xOd6JX))
 
 Debate videos are longer, because of the recursive prompting used to create them. I used system prompts to define "personas" for each character involved in the debate. This worked well and generated semi-interesting debates. However, both sides presented pretty generic arguments. The content of the debates was repetitive. The image generation technique led to videos that were not visually engaging, simply because the images did not change often enough. Additionally, the generated images were not very good. I tried using GPT-4 to enhance the image prompts by feeding it the debate argument and prompting it to generate visuals to accompany the debate argument. This improved the results, but only slightly.
 
-### Listicle Videos
+### Listicle Videos ([Playlist](https://www.youtube.com/playlist?list=PLbNdqC_BkyECUDl20HwFkHeuptbZY7R9z))
 
 This format yielded shorter videos that were more visually engaging. I changed the prompting technique slightly. Instead of recursively prompting GPT, I simply asked GPT to generate a json object to represent the script for the video. It created a list of objects with the keys "voiceover" and "image_description". This structure made it easy to generate voiceovers and images for each section of the video. In the prompt for the listicle videos, I asked GPT to close out the video by asking viewers to like and subscribe. It also generated imagery to go along with the like and subscribe call to action.
 
-### Explainer Videos
+### Explainer Videos ([Playlist](https://www.youtube.com/playlist?list=PLbNdqC_BkyECUDl20HwFkHeuptbZY7R9z))
 
 The explainer video format used the same techniques employed in the listicle format. I was hoping that changing the prompts slightly would allow GPT-4 to do a deep dive on specific topics. Some of the videos were mildly amusing, but it's becoming clear that these videos are just never going to be remotely good. They might be entertaining to someone who is curious about AI Generated content.
 
