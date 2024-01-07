@@ -23,10 +23,11 @@ proponent_name = input("What is the name of the proponent?")
 opponent_name = input("What is the name of the opponent?")
 
 moderator_model = "gpt-3.5-turbo-1106"
-# proponent_model = "gpt-3.5-turbo-1106"
+#proponent_model = "gpt-3.5-turbo-1106"
 proponent_model = "gpt-4-1106-preview"
-# opponent_model = "gpt-3.5-turbo-1106"
+#opponent_model = "gpt-3.5-turbo-1106"
 opponent_model = "gpt-4-1106-preview"
+image_description_model = "gpt-3.5-turbo-1106"
 
 
 # initialize the list of messages
@@ -77,10 +78,11 @@ def get_proponent_response(debate_messages):
     response = client.chat.completions.create(
         model=proponent_model,
         response_format={"type": "json_object"},
+        temperature=1.1,
         messages=[
             {
                 "role": "system",
-                "content": f"You are {proponent_name}. You are debating as a proponent of {topic}. Your response should be a json object with the keys 'speaker' and 'content'",
+                "content": f"You are {proponent_name}. You are debating as a proponent of {topic}. Your response should be a json object with the keys 'speaker' and 'content'. Close out the video by thanking the viewers for watching, asking them to like the video and subscribe to our channel.",
             },
             {
                 "role": "user",
@@ -97,6 +99,7 @@ def get_opponent_response(debate_messages):
     response = client.chat.completions.create(
         model=opponent_model,
         response_format={"type": "json_object"},
+        temperature=1.1,
         messages=[
             {
                 "role": "system",
@@ -173,7 +176,7 @@ for i, message in enumerate(debate_messages):
 
 for i, message in enumerate(debate_messages):
     text_response = client.chat.completions.create(
-        model="gpt-4-1106-preview",
+        model=image_description_model,
         messages=[
             {
                 "role": "system",

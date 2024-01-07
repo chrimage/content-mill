@@ -17,4 +17,4 @@ The answer is yes we can. Whether it's good or not is another question.
 
 1. Install dependencies: openai, moviepy, etc... I will make a requirements.txt file later.
 2. Create a .env file with your OpenAI API key.
-3. Run debater.py and answer the prompts.
+3. Run debater.py and answer the prompts
