@@ -9,6 +9,7 @@ import requests
 import uuid
 import pathlib
 from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip
+from abc import ABC, abstractmethod
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -17,21 +18,136 @@ dotenv.load_dotenv()
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-# prompt the user for the topic
-topic = input("What topic should the AI debate?")
-proponent_name = input("What is the name of the proponent?")
-opponent_name = input("What is the name of the opponent?")
 
-moderator_model = "gpt-3.5-turbo-1106"
-#proponent_model = "gpt-3.5-turbo-1106"
-proponent_model = "gpt-4-1106-preview"
-#opponent_model = "gpt-3.5-turbo-1106"
-opponent_model = "gpt-4-1106-preview"
-image_description_model = "gpt-3.5-turbo-1106"
+class DebateParticipant(ABC):
+    def __init__(self, model, name, role, topic, temperature="1.0"):
+        self.name = name
+        self.model = model
+        self.role = role
+        self.topic = topic
+        self.temperature = temperature
+
+    def get_system_message(self):
+        return f"You are {self.name}. You are debating as a {self.role} of {self.topic}. Your response should be a json object with the keys 'speaker', 'content', and 'image_description'. The speaker should be your name. The content should be your response. The image_description should be a description of an image to accompany your response. The image will be displayed on screen while your response is being read aloud. Avoid anything explicit or inappropriate. Avoid anything offensive. Avoid directly mentioning anything that is copyrighted."
+
+    def get_response(self, debate_messages, instruction=""):
+        response = client.chat.completions.create(
+            model=self.model,
+            response_format={"type": "json_object"},
+            messages=[
+                {
+                    "role": "system",
+                    "content": self.get_system_message(),
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(debate_messages),
+                },
+                {
+                    "role": "user",
+                    "content": instruction,
+                },
+            ],
+        )
+
+        response = json.loads(response.choices[0].message.content)
+
+        debate_messages.append(response)
+
+        return response
+
+class DebateManager:
+    def __init__(self, debate_config):
+        self.debate_config = debate_config
+        self.topic = debate_config["topic"]
+        self.participants = self.initialize_participants(debate_config["participants"])
+        self.debate_messages = []
+
+    def initialize_participants(self, participants_config):
+        participants = {}
+        for participant in participants_config:
+            role = participant["role"].lower()  # Using role as the key
+            participant_obj = DebateParticipant(participant["model"],
+                                                participant["name"],
+                                                role,
+                                                self.topic,
+                                                participant.get("temperature", "1.0"))
+            participants[role] = participant_obj
+        return participants
+
+    def conduct_debate(self):
+        for round_info in self.debate_config["rounds"]:
+            print(f"\n--- {round_info['name']} ---")
+            for step_info in round_info["steps"]:
+                role, instruction = step_info if isinstance(step_info, tuple) else (step_info, "")
+                participant = self.participants[role.lower()]
+                response = participant.get_response(self.debate_messages, instruction)
+                print(f"{participant.name}: {response['content']}\n")
+
+        return self.debate_messages
 
 
-# initialize the list of messages
-debate_messages = []
+# input the debate topic
+
+topic = input("What is the topic of the debate? ")
+
+debate_config = {
+    "topic": topic,
+    "participants": [
+        {
+            "name": "Moderator",
+            "role": "moderator",
+            "model": "gpt-4-1106-preview",
+            "temperature": "0.7",
+        },
+        {
+            "name": "Alex",
+            "role": "proponent",
+            "model": "gpt-4-1106-preview",
+            "temperature": "1.1",
+        },
+        {
+            "name": "Jordan",
+            "role": "opponent",
+            "model": "gpt-4-1106-preview",
+            "temperature": "1.1",
+        },
+    ],
+"rounds": [
+    {
+        "name": "Opening Constructive Statements",
+        "steps": [("moderator", "The proponent is Alex and the opponent is Jordan. Each debater should give a 5 minute constructive speech"), "proponent", "opponent"]},
+    {
+        "name": "Cross Examination",
+        "steps": [
+            ("moderator", "Introduce the cross-examination round"),
+            ("opponent", "Question to Proponent"),
+            ("proponent", "Answer to Opponent's Question"),
+            ("moderator", "Ask Proponent for their question"),
+            ("proponent", "Question to Opponent"),
+            ("opponent", "Answer to Proponent's Question")
+        ]
+    },
+    {"name": "Closing Arguments", "steps": [
+        ("moderator", "Introduce the closing arguments round"),
+        "proponent",
+        "opponent",
+        ("moderator", "conclude the debate. Thank the participants and the audience. Ask viewers to comment, like, and subscribe.")
+        ]},
+],
+
+}
+
+topic = debate_config["topic"]
+# Instantiate DebateManager
+debate_manager = DebateManager(debate_config)
+
+# Conduct the debate
+debate_messages = debate_manager.conduct_debate()
+
+# Print the debate messages
+for msg in debate_messages:
+    print(f"{msg['speaker']}: {msg['content']}")
 
 # create a unique name for the debate
 topic_slug = slugify.slugify(topic)
@@ -47,150 +163,51 @@ if not os.path.exists(f"{debate_folder}"):
     os.makedirs(f"{debate_folder}")
 
 
-def get_moderator_response(debate_messages, instruction=""):
-    response = client.chat.completions.create(
-        model=moderator_model,
-        response_format={"type": "json_object"},
-        messages=[
-            {
-                "role": "system",
-                "content": f"You are the moderator. You are moderating the debate between {proponent_name} and {opponent_name} on {topic}. Your response should be a json object with the keys 'speaker' and 'content'",
-            },
-            {
-                "role": "user",
-                "content": json.dumps(debate_messages),
-            },
-            {
-                "role": "user",
-                "content": instruction,
-            },
-        ],
-    )
+# Define the file path for the transcript
+transcript_file_path = os.path.join(debate_folder, "transcript.json")
 
-    response = json.loads(response.choices[0].message.content)
+# Save the transcript
+with open(transcript_file_path, "w") as file:
+    json.dump(debate_messages, file, indent=4)
 
-    debate_messages.append(response)
+print(f"Transcript saved to {transcript_file_path}")
 
-    return response
+# get the names of the speakers
 
-
-def get_proponent_response(debate_messages):
-    response = client.chat.completions.create(
-        model=proponent_model,
-        response_format={"type": "json_object"},
-        temperature=1.1,
-        messages=[
-            {
-                "role": "system",
-                "content": f"You are {proponent_name}. You are debating as a proponent of {topic}. Your response should be a json object with the keys 'speaker' and 'content'. Close out the video by thanking the viewers for watching, asking them to like the video and subscribe to our channel.",
-            },
-            {
-                "role": "user",
-                "content": json.dumps(debate_messages),
-            },
-        ],
-    )
-    response = json.loads(response.choices[0].message.content)
-    debate_messages.append(response)
-    return response
-
-
-def get_opponent_response(debate_messages):
-    response = client.chat.completions.create(
-        model=opponent_model,
-        response_format={"type": "json_object"},
-        temperature=1.1,
-        messages=[
-            {
-                "role": "system",
-                "content": f"You are {opponent_name}. You are debating as an opponent of {topic}. Your response should be a json object with the keys 'speaker' and 'content'",
-            },
-            {
-                "role": "user",
-                "content": json.dumps(debate_messages),
-            },
-        ],
-    )
-
-    response = json.loads(response.choices[0].message.content)
-
-    debate_messages.append(response)
-
-    return response
-
-
-def debate_round(debate_messages, moderator_instruction=""):
-    moderator_response = get_moderator_response(
-        debate_messages, instruction=moderator_instruction
-    )
-    proponent_response = get_proponent_response(debate_messages)
-    opponent_response = get_opponent_response(debate_messages)
-    return debate_messages
-
-
-# Moderator starts the debate and asks for opening statements
-debate_messages = debate_round(
-    debate_messages,
-    moderator_instruction=f"Introduce the debate on {topic}. Ask {proponent_name} and {opponent_name} for their constructive statements. Each side will present their constructive statement before you get a chance to speak again.",
-)
-
-# Moderator facilitates cross-examination
-debate_messages = debate_round(
-    debate_messages,
-    moderator_instruction=f"Start the rebuttal round. Each side will present their rebuttal before you get a chance to speak again.",
-)
-
-# Moderator gives closing remarks
-response = get_moderator_response(
-    debate_messages,
-    instruction=f"Moderator, please give your closing remarks and formally conclude the debate on {topic}.",
-)
-
-# print the debate messages
-print(json.dumps(debate_messages, indent=1))
-
-# write the transcript to a file in the debate folder
-with open(f"{debate_folder}/transcript.json", "w") as f:
-    f.write(json.dumps(debate_messages, indent=1))
+for participant in debate_config["participants"]:
+    if participant["role"] == "proponent":
+        proponent_name = participant["name"]
+    elif participant["role"] == "opponent":
+        opponent_name = participant["name"]
 
 for i, message in enumerate(debate_messages):
-    # valid voice names are alloy, echo, fable, onyx, nova, and shimmer
-    if message["speaker"] == "moderator":
-        voice = "alloy"
-    elif message["speaker"] == proponent_name:
-        voice = "echo"
-    elif message["speaker"] == opponent_name:
-        voice = "fable"
-    else:
-        voice = "alloy"
-    response = client.audio.speech.create(
-        model="tts-1",
-        voice=voice,
-        input=message["content"],
-    )
-    # save the audio to a file in the debate folder
-    speech_file_path = Path(f"{debate_folder}/{i}.mp3")
-    response.stream_to_file(speech_file_path)
-
-# iterate through the conversation and create an image for each message.
+   # valid voice names are alloy, echo, fable, onyx, nova, and shimmer
+   if message["speaker"] == "moderator":
+       voice = "alloy"
+   elif message["speaker"] == proponent_name:
+       voice = "echo"
+   elif message["speaker"] == opponent_name:
+       voice = "fable"
+   else:
+       voice = "alloy"
+   response = client.audio.speech.create(
+       model="tts-1",
+       voice=voice,
+       input=message["content"],
+   )
+   # save the audio to a file in the debate folder
+   speech_file_path = Path(f"{debate_folder}/{i:03}.mp3")
+   response.stream_to_file(speech_file_path)
+#
+## iterate through the conversation and create an image for each message.
 
 for i, message in enumerate(debate_messages):
-    text_response = client.chat.completions.create(
-        model=image_description_model,
-        messages=[
-            {
-                "role": "system",
-                "content": "You will be provided with some text. Your response should be a description of an image collage to accompany the text. The collage will be displayed on screen while the text is being read aloud. Avoid anything explicit or inappropriate. Avoid anything offensive. Avoid anything that is copyrighted. If copyrighted works are mentioned, use generic descriptions instead.",
-            },
-            {"role": "user", "content": message["content"]},
-        ],
-    )
-    visual_description = text_response.choices[0].message.content
-    print(visual_description)
+    image_description = message["image_description"]
+    print(image_description)
     try:
         response = client.images.generate(
             model="dall-e-3",
-            prompt=f"{visual_description}",
+            prompt=f"{image_description}",
             size="1024x1024",
             quality="hd",
             style="vivid",
@@ -201,7 +218,7 @@ for i, message in enumerate(debate_messages):
         continue
     image_url = response.data[0].url
     image = requests.get(image_url)
-    with open(f"{debate_folder}/{i}.jpg", "wb") as f:
+    with open(f"{debate_folder}/{i:03}.jpg", "wb") as f:
         f.write(image.content)
 
 # start creating a video from the images and audio files
