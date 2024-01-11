@@ -18,6 +18,7 @@ dotenv.load_dotenv()
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
+image_size = "1792x1024"
 
 class DebateParticipant(ABC):
     def __init__(self, model, name, role, topic, temperature="1.0"):
@@ -120,7 +121,7 @@ debate_config = {
     {
         "name": "Cross Examination",
         "steps": [
-            ("moderator", "Introduce the cross-examination round"),
+            ("moderator", "Introduce the cross-examination round. The opponent will go first."),
             ("opponent", "Question to Proponent"),
             ("proponent", "Answer to Opponent's Question"),
             ("moderator", "Ask Proponent for their question"),
@@ -208,7 +209,7 @@ for i, message in enumerate(debate_messages):
         response = client.images.generate(
             model="dall-e-3",
             prompt=f"{image_description}",
-            size="1024x1024",
+            size=image_size,
             quality="hd",
             style="vivid",
             n=1,
