@@ -6,3 +6,4 @@ debates/
 listicles/
 explainers/
 haikus/
+*.pyc

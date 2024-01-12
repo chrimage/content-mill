@@ -8,8 +8,8 @@ import slugify
 import requests
 import uuid
 import pathlib
-from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip
-from abc import ABC, abstractmethod
+from video_utils import create_video_from_clips
+from abc import ABC
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -29,7 +29,7 @@ class DebateParticipant(ABC):
         self.temperature = temperature
 
     def get_system_message(self):
-        return f"You are {self.name}. You are debating as a {self.role} of {self.topic}. Your response should be a json object with the keys 'speaker', 'content', and 'image_description'. The speaker should be your name. The content should be your response. The image_description should be a description of an image to accompany your statement. Avoid using images of the debate setting or the debaters. Avoid using images of celebrities or public figures. Our text to image system uses a content filter, so avoid anything inappropriate. Avoid anything offensive. Avoid directly mentioning anything that is copyrighted."
+        return f"You are {self.name}. You are debating as a {self.role} of {self.topic}. Your response should be a json object with the keys 'speaker', 'content', and 'image_description'. The speaker should be your name. The content should be your response. The image_description should be a description of an image to accompany your statement. Avoid using images of the debate setting or the debaters. Avoid using images of celebrities or public figures. Our text to image system uses a content filter, so avoid anything inappropriate. Avoid anything offensive. Avoid directly mentioning anything that is copyrighted in image_description. Do not use the names of any copyrighted works in image_description."
 
     def get_response(self, debate_messages, instruction=""):
         response = client.chat.completions.create(
@@ -184,50 +184,5 @@ for i, message in enumerate(debate_messages):
 
 # start creating a video from the images and audio files
 
-
-directory = debate_folder
-
-# get all png files in the directory
-
-png_files = list(pathlib.Path(directory).glob("*.png"))
-
-# get all mp3 files in the directory
-
-mp3_files = list(pathlib.Path(directory).glob("*.mp3"))
-
-print(f"{mp3_files}\n\n{png_files}")
-
-# sort the files by name
-
-png_files.sort()
-mp3_files.sort()
-
-# create a list of clips
-
-clips = []
-
-# for example, 0.png and 0.mp3 should be combined into a video clip.
-# the video clip should match the duration of the mp3 file.
-
-for i in range(len(png_files)):
-    png_file = str(png_files[i])
-    mp3_file = str(mp3_files[i])
-    print(f"Processing {png_file} and {mp3_file}")
-    png_clip = ImageClip(png_file)
-    mp3_clip = AudioFileClip(mp3_file)
-    png_clip = png_clip.set_duration(mp3_clip.duration)
-    png_clip = png_clip.set_audio(
-        mp3_clip
-    )  # Set the audio of the png_clip to be the mp3_clip
-    clips.append(png_clip)
-
-# concatenate the clips
-final_clip = concatenate_videoclips(clips)
-
-# write the final clip to a file
-
-final_clip.write_videofile(f"{directory}/final_clip.mp4", fps=24)
-
-# close the final clip
-
-final_clip.close()
+output_video_path = f"{debate_folder}/final_video.mp4"
+create_video_from_clips(debate_folder, output_video_path)
