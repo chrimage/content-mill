@@ -32,7 +32,7 @@ response = client.chat.completions.create(
     messages=[
         {
             "role": "system",
-            "content": f"Your task is to write a script for an explainer video. Represent the script for an explainer video in json format. The video will be a slideshow with AI generated images, and TTS voiceover. Be sure to include interesting facts throughout the video. Use the keys title and script. script is a list of objects, each with the key 'image_description' and 'voiceover'. Each voiceover section should be about 150 words in length. The goal is to accompany each section of voiceover with a unique image related to the voiceover. The video should be suitable for audiences of all ages. Close out the video by thanking the viewer for watching, asking them to like the video, and asking them to subscribe to our channel.",
+            "content": f"Your task is to write a script for an explainer video. Represent the script for an explainer video in json format. The video will be a slideshow with AI generated images, and TTS voiceover. Be sure to include interesting facts throughout the video. Be as thorough as possible. Use the keys title and script. script is a list of objects, each with the key 'image_description' and 'voiceover'. Each voiceover section should be about 150 words in length. The goal is to accompany each section of voiceover with a unique image related to the voiceover. The video should be suitable for audiences of all ages. Close out the video by thanking the viewer for watching, asking them to like the video, and asking them to subscribe to our channel.",
         },
         {
             "role": "user",

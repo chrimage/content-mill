@@ -38,12 +38,15 @@
             ["opponent", "Answer to Proponent's Question"]
         ]
     },
-    {"name": "Closing Arguments", "steps": [
-        ["moderator", "Introduce the closing arguments round. Opponent goes first."],
-        ["opponent", "Present your closing argument"],
-        ["proponent", "Present your closing argument"],
-        ["moderator", "Conclude the debate. Thank the participants and the audience. Remind viewers that this debate was entirely AI generated. Therefore, the opinions presented by debaters do not reflect the views of this channel. Ask viewers to comment, like, and subscribe."]
-        ]}
+    {
+        "name": "Closing Arguments",
+        "steps": [
+            ["moderator", "Introduce the closing arguments round. Opponent goes first."],
+            ["opponent", "Present your closing argument"],
+            ["proponent", "Present your closing argument"],
+            ["moderator", "Conclude the debate. Thank the participants and the audience. Remind viewers that this debate was entirely AI generated. Therefore, the opinions presented by debaters do not reflect the views of this channel. Ask viewers to comment, like, and subscribe. In addition to sharing their thoughts on the debate, ask the viewers to let us know what other debate topics they would like to see presented."]
+        ]
+    }
 ]
 
 }
