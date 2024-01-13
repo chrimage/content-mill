@@ -19,34 +19,73 @@
             "temperature": "1.1"
         }
     ],
-"rounds": [
-    {
-        "name": "Opening Constructive Statements",
-        "steps": [
-            ["moderator", "Introduce the debate. The proponent is Alex and the opponent is Jordan. Each debater should give a constructive speech. There is no time limit. The proponent will go first."],
-            ["proponent", "Present your opening constructive statement."],
-            ["opponent", "Present your opening constructive statement."]
-             ]},
-    {
-        "name": "Cross Examination",
-        "steps": [
-            ["moderator", "Introduce the cross-examination round. The opponent will go first."],
-            ["opponent", "Question to Proponent"],
-            ["proponent", "Answer to Opponent's Question"],
-            ["moderator", "Ask Proponent for their question"],
-            ["proponent", "Question to Opponent"],
-            ["opponent", "Answer to Proponent's Question"]
-        ]
-    },
-    {
-        "name": "Closing Arguments",
-        "steps": [
-            ["moderator", "Introduce the closing arguments round. Opponent goes first."],
-            ["opponent", "Present your closing argument"],
-            ["proponent", "Present your closing argument"],
-            ["moderator", "Conclude the debate. Thank the participants and the audience. Remind viewers that this debate was entirely AI generated. Therefore, the opinions presented by debaters do not reflect the views of this channel. Ask viewers to comment, like, and subscribe. In addition to sharing their thoughts on the debate, ask the viewers to let us know what other debate topics they would like to see presented."]
-        ]
-    }
-]
-
+    "rounds": [
+        {
+            "name": "Opening Constructive Statements",
+            "steps": [
+                [
+                    "moderator",
+                    "Introduce the debate. The proponent is Alex and the opponent is Jordan. Each debater should give a constructive speech. There is no time limit. The proponent will go first."
+                ],
+                [
+                    "proponent",
+                    "Present your opening constructive statement."
+                ],
+                [
+                    "opponent",
+                    "Present your opening constructive statement."
+                ]
+            ]
+        },
+        {
+            "name": "Cross Examination",
+            "steps": [
+                [
+                    "moderator",
+                    "Introduce the cross-examination round. The opponent will go first."
+                ],
+                [
+                    "opponent",
+                    "Question to Proponent"
+                ],
+                [
+                    "proponent",
+                    "Answer to Opponent's Question"
+                ],
+                [
+                    "moderator",
+                    "Ask Proponent for their question"
+                ],
+                [
+                    "proponent",
+                    "Question to Opponent"
+                ],
+                [
+                    "opponent",
+                    "Answer to Proponent's Question"
+                ]
+            ]
+        },
+        {
+            "name": "Closing Arguments",
+            "steps": [
+                [
+                    "moderator",
+                    "Introduce the closing arguments round. Opponent goes first."
+                ],
+                [
+                    "opponent",
+                    "Present your closing argument"
+                ],
+                [
+                    "proponent",
+                    "Present your closing argument"
+                ],
+                [
+                    "moderator",
+                    "Conclude the debate. Thank the participants and the audience. Remind viewers that this debate was entirely AI generated. Therefore, the opinions presented by debaters do not reflect the views of this channel. Ask viewers to comment, like, and subscribe. In addition to sharing their thoughts on the debate, ask the viewers to let us know what other debate topics they would like to see presented."
+                ]
+            ]
+        }
+    ]
 }
