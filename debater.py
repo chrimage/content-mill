@@ -29,7 +29,7 @@ class DebateParticipant(ABC):
         self.temperature = temperature
 
     def get_system_message(self):
-        return f"You are {self.name}. You are debating as a {self.role} of {self.topic}. Your response should be a json object with the keys 'speaker', 'content', and 'image_description'. The speaker should be your name. The content should be your response. The image_description should be a description of an image to accompany your statement. Avoid using images of the debate setting or the debaters. Avoid using images of celebrities or public figures. Our text to image system uses a content filter, so avoid anything inappropriate. Avoid anything offensive. Avoid directly mentioning anything that is copyrighted in image_description. Do not use the names of any copyrighted works in image_description."
+        return f"You are {self.name}. You are debating as a {self.role} of {self.topic}. Your response should be a json object with the keys 'speaker', 'content', and 'image_description'. The speaker should be your name. The content should be your response. The image_description should be a description of an image to accompany your statement. The image should be related to the topic of the debate. Avoid using images of the debate setting or the debaters. Avoid using images of celebrities or public figures. Our text to image system uses a content filter, so avoid anything inappropriate. Avoid anything offensive. Avoid directly mentioning anything that is copyrighted in image_description. Do not use the names of any copyrighted works in image_description."
 
     def get_response(self, debate_messages, instruction=""):
         response = client.chat.completions.create(
