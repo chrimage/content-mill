@@ -3,19 +3,19 @@
         {
             "name": "Moderator",
             "role": "moderator",
-            "model": "gpt-4-1106-preview",
+            "model": "gpt-4-turbo-preview",
             "temperature": "0.7"
         },
         {
             "name": "Alex",
             "role": "proponent",
-            "model": "gpt-4-1106-preview",
+            "model": "gpt-4-turbo-preview",
             "temperature": "1.0"
         },
         {
             "name": "Jordan",
             "role": "opponent",
-            "model": "gpt-4-1106-preview",
+            "model": "gpt-4-turbo-preview",
             "temperature": "1.1"
         }
     ],

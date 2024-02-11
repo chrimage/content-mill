@@ -36,12 +36,12 @@ with open(draft_script_path) as f:
 # prompt the AI for a revised script
 
 response = client.chat.completions.create(
-    model="gpt-4-1106-preview",
+    model="gpt-4-turbo-preview",
     response_format={"type": "json_object"},
     messages=[
         {
             "role": "system",
-            "content": f"You will be provided with a draft script for a YouTube video. Transform the script into a structured json output with the keys 'title' and 'script'. 'script' should be a list of objects with the keys 'voiceover' and 'image_description', where voiceover is the revised script, and image_description is a description of an image to accompany the voiceover. Stay true to the spirit of the original draft. The goal is to accompany each section of voiceover with a unique image related to the voiceover.",
+            "content": f"You will be provided with a draft script for a YouTube video. Transform the script into a structured json output with the keys 'title' and 'script'. 'script' should be a list of objects with the keys 'voiceover' and 'image_description', where voiceover is the revised script, and image_description is a description of an image to accompany the voiceover. Stay true to the spirit of the original draft. The goal is to accompany each section of voiceover with a unique image related to the voiceover. Editor instructions are inside triple braces.",
         },
         {
             "role": "user",
@@ -63,6 +63,14 @@ print(f"Title: {title}")
 final_script = final_script["script"]
 
 print(json.dumps(final_script, indent=4, ensure_ascii=False))
+
+# prompt the user to confirm the script
+
+response = input("Does this script look good? (y/n) ")
+
+if response != "y":
+    print("Exiting...")
+    sys.exit(1)
 
 # ensure the scripted_videos folder exists
 
@@ -90,6 +98,8 @@ with open(f"{video_dir}/script.json", "w") as f:
 
 voiceovers = [item["voiceover"] for item in final_script]
 
+voice = random.choice(["alloy", "echo", "fable", "onyx", "nova", "shimmer"])
+
 for i, voiceover in enumerate(voiceovers):
     # print status message
     print(f"Processing voiceover {i} of {len(voiceovers)}")
@@ -97,7 +107,6 @@ for i, voiceover in enumerate(voiceovers):
     print(voiceover)
     # valid voice names are alloy, echo, fable, onyx, nova, and shimmer
     # choose a random voice
-    voice = random.choice(["alloy", "echo", "fable", "onyx", "nova", "shimmer"])
     response = client.audio.speech.create(
         model="tts-1",
         voice=voice,

@@ -27,7 +27,7 @@ topic = input("What topic should the AI make a listicle about?")
 # prompt the AI for listicle script in json format
 
 response = client.chat.completions.create(
-    model="gpt-4-1106-preview",
+    model="gpt-4-turbo-preview",
     response_format={"type": "json_object"},
     messages=[
         {
