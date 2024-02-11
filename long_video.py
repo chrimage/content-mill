@@ -8,20 +8,21 @@ from video_utils import create_video_from_clips
 
 load_dotenv()
 
-client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-OUTLINER_SYSTEM_MESSAGE="""Your job is to write outlines for YouTube videos.
+OUTLINER_SYSTEM_MESSAGE = """Your job is to write outlines for YouTube videos.
 The target length is 10 minutes.
 The outline should be a json object. The top level keys are 'title' and 'sections'.
 The 'sections' key should have a list of objects. Each object should have a 'title' and 'description' key.
 If there are subsections, the object should have a 'title' and 'items' key.
 The 'items' key should have a list of objects with a 'title' and 'description' key."""
 
-SECTION_SYSTEM_MESSAGE="""Your job is to write a script for a section of a YouTube video.
+SECTION_SYSTEM_MESSAGE = """Your job is to write a script for a section of a YouTube video.
 Each section of voiceover is accompanied by a single image.
 Your response should be in json as a list of objects. The list key is 'section'.
 Each object in 'section' should have the keys 'voiceover' and 'image_description'.
 """
+
 def get_outline(topic):
     response = client.chat.completions.create(
         model="gpt-4-turbo-preview",
@@ -35,21 +36,17 @@ def get_outline(topic):
                 "content": f"I am creating a video about {topic}.",
             },
         ],
-        response_format={"type": "json_object"}
+        response_format={"type": "json_object"},
     )
     outline = response.choices[0].message.content
     outline = json.loads(outline)
     return outline
 
-def get_section_script(video_title,context,section):
-    # concatenate the voiceovers
+def get_section_script(video_title, context, section):
     response = client.chat.completions.create(
         model="gpt-4-turbo-preview",
         messages=[
-            {
-                "role": "system",
-                "content": SECTION_SYSTEM_MESSAGE
-            },
+            {"role": "system", "content": SECTION_SYSTEM_MESSAGE},
             {
                 "role": "user",
                 "content": f"""Video Title: {video_title}
@@ -57,12 +54,12 @@ def get_section_script(video_title,context,section):
                 The next Section to write is: {json.dumps(section,ensure_ascii=False)}""",
             },
         ],
-        response_format={"type": "json_object"}
+        response_format={"type": "json_object"},
     )
     section_script = response.choices[0].message.content
     section_script = json.loads(section_script)
     section_script = section_script["section"]
-    return section_script            
+    return section_script
 
 def flatten_outline(outline):
     flat_outline = []
@@ -82,8 +79,8 @@ def process_outline(outline):
     script = []
     for section in flat_outline:
         print(section["title"])
-        section_script = get_section_script(video_title,script,section)
-        print(json.dumps(section_script,indent=2,ensure_ascii=False))
+        section_script = get_section_script(video_title, script, section)
+        print(json.dumps(section_script, indent=2, ensure_ascii=False))
         script.extend(section_script)
     return script
 
@@ -91,32 +88,27 @@ def process_outline(outline):
 video_topic = input("What is the topic of your video? ")
 
 # Generate the outline
-
 outline = get_outline(video_topic)
 
 # Print the outline
+print(json.dumps(outline, indent=2, ensure_ascii=False))
 
-print(json.dumps(outline, indent=2))
-
+# Process the outline into a script
 script = process_outline(outline)
 
-output_folder = OutputFolder("long_videos",outline["title"])
-
+# Save the script
+output_folder = OutputFolder("long_videos", outline["title"])
 with open(output_folder.path / "script.json", "w") as f:
-    json.dump(script,f,indent=2,ensure_ascii=False)
+    json.dump(script, f, indent=2, ensure_ascii=False)
 
 # Generate the images and voiceovers
-
 for i, segment in enumerate(script):
     image_description = segment["image_description"]
     generate_image(image_description, "1024x1024", output_folder.path, f"{i:03}.png")
     voiceover = segment["voiceover"]
     generate_voice_clip(voiceover, "alloy", output_folder.path, f"{i:03}.mp3")
-    
-# Create the video
 
+# Create the video
 video_path = output_folder.path / "video.mp4"
 create_video_from_clips(script, output_folder.path, video_path)
-
 print(f"Video created at {video_path}")
-
