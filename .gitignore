@@ -10,3 +10,4 @@ scripted_videos/
 roundtable/
 long_videos/
 *.pyc
+client_secrets.json

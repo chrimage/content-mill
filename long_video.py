@@ -10,22 +10,26 @@ load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+OUTLINER_MODEL = "gpt-4-turbo-preview"
+
 OUTLINER_SYSTEM_MESSAGE = """Your job is to write outlines for YouTube videos.
-The target length is 10 minutes.
 The outline should be a json object. The top level keys are 'title' and 'sections'.
 The 'sections' key should have a list of objects. Each object should have a 'title' and 'description' key.
 If there are subsections, the object should have a 'title' and 'items' key.
 The 'items' key should have a list of objects with a 'title' and 'description' key."""
 
+SECTION_MODEL = "gpt-4-turbo-preview"
+
 SECTION_SYSTEM_MESSAGE = """Your job is to write a script for a section of a YouTube video.
-Each section of voiceover is accompanied by a single image.
+Each section of voiceover should be accompanied by a single image.
+Optimize the script for SEO and engagement.
 Your response should be in json as a list of objects. The list key is 'section'.
 Each object in 'section' should have the keys 'voiceover' and 'image_description'.
-"""
+Do not use phrases like "in conclusion" until you are writing the closing section of the video."""
 
 def get_outline(topic):
     response = client.chat.completions.create(
-        model="gpt-4-turbo-preview",
+        model=OUTLINER_MODEL,
         messages=[
             {
                 "role": "system",
@@ -42,16 +46,17 @@ def get_outline(topic):
     outline = json.loads(outline)
     return outline
 
-def get_section_script(video_title, context, section):
+
+def get_section_script(video_title, script, section):
     response = client.chat.completions.create(
-        model="gpt-4-turbo-preview",
+        model=SECTION_MODEL,
         messages=[
-            {"role": "system", "content": SECTION_SYSTEM_MESSAGE},
+            {
+                "role": "system",
+                "content": SECTION_SYSTEM_MESSAGE},
             {
                 "role": "user",
-                "content": f"""Video Title: {video_title}
-                Here's the script so far: {json.dumps(context,ensure_ascii=False)}
-                The next Section to write is: {json.dumps(section,ensure_ascii=False)}""",
+                "content": f"""Video Title: {video_title}\n\nHere's the script so far: {json.dumps(script,ensure_ascii=False)}\n\nThe next Section to write is: {json.dumps(section,ensure_ascii=False)}""",
             },
         ],
         response_format={"type": "json_object"},
@@ -60,6 +65,7 @@ def get_section_script(video_title, context, section):
     section_script = json.loads(section_script)
     section_script = section_script["section"]
     return section_script
+
 
 def flatten_outline(outline):
     flat_outline = []
@@ -73,6 +79,7 @@ def flatten_outline(outline):
             flat_outline.append(section)
     return flat_outline
 
+
 def process_outline(outline):
     video_title = outline["title"]
     flat_outline = flatten_outline(outline)
@@ -83,6 +90,7 @@ def process_outline(outline):
         print(json.dumps(section_script, indent=2, ensure_ascii=False))
         script.extend(section_script)
     return script
+
 
 # Prompt the user for a topic
 video_topic = input("What is the topic of your video? ")
@@ -109,6 +117,6 @@ for i, segment in enumerate(script):
     generate_voice_clip(voiceover, "alloy", output_folder.path, f"{i:03}.mp3")
 
 # Create the video
-video_path = output_folder.path / "video.mp4"
-create_video_from_clips(script, output_folder.path, video_path)
+video_path = f"{output_folder.path}/video.mp4"
+create_video_from_clips(output_folder.path, video_path)
 print(f"Video created at {video_path}")
