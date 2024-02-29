@@ -12,20 +12,29 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 OUTLINER_MODEL = "gpt-4-turbo-preview"
 
-OUTLINER_SYSTEM_MESSAGE = """Your job is to write outlines for YouTube videos.
+OUTLINER_SYSTEM_MESSAGE = """Your job is to write an outline for a YouTube video based on the topic provided by the user..
+Include a reminder that the script, voiceover, and images for this video are entirely AI generated.
+Include a reminder that the AI generated images are not factually accurate.
+The video should be 10-15 minutes long.
+Optimize the outline content for SEO and engagement.
+Include a call to action section at the end of the video, reminding viewers to like, comment, and subscribe.
 The outline should be a json object. The top level keys are 'title' and 'sections'.
-The 'sections' key should have a list of objects. Each object should have a 'title' and 'description' key.
+The 'sections' key should have a list of objects. Each object should have a 'title' and 'writing_prompt' key.
 If there are subsections, the object should have a 'title' and 'items' key.
-The 'items' key should have a list of objects with a 'title' and 'description' key."""
+The 'items' key should have a list of objects with a 'title' and 'writing_prompt' key.
+'title' is the title of the section. 'writing_prompt' should be a writing prompt for the section."""
+
 
 SECTION_MODEL = "gpt-4-turbo-preview"
 
-SECTION_SYSTEM_MESSAGE = """Your job is to write a script for a section of a YouTube video.
+SECTION_SYSTEM_MESSAGE = """Your job is to write a script for a portion of a YouTube video.
 Each section of voiceover should be accompanied by a single image.
 Optimize the script for SEO and engagement.
-Your response should be in json as a list of objects. The list key is 'section'.
+Your response should be a json list with the key 'section'.
 Each object in 'section' should have the keys 'voiceover' and 'image_description'.
-Do not use phrases like "in conclusion" until you are writing the closing section of the video."""
+'voiceover' should be the voiceover for the section. 'image_description' should be a description of the image for the section.
+Do not wrap up the video unless the section is titled 'Conclusion' or 'Outro'."""
+
 
 def get_outline(topic):
     response = client.chat.completions.create(
@@ -37,10 +46,11 @@ def get_outline(topic):
             },
             {
                 "role": "user",
-                "content": f"I am creating a video about {topic}.",
+                "content": f"Write an outline for a video about '{topic}'.",
             },
         ],
         response_format={"type": "json_object"},
+        temperature=1.1,
     )
     outline = response.choices[0].message.content
     outline = json.loads(outline)
@@ -60,6 +70,7 @@ def get_section_script(video_title, script, section):
             },
         ],
         response_format={"type": "json_object"},
+        temperature=0.7,
     )
     section_script = response.choices[0].message.content
     section_script = json.loads(section_script)
@@ -73,8 +84,8 @@ def flatten_outline(outline):
         if "items" in section:
             for item in section["items"]:
                 title = f"{section['title']} - {item['title']}"
-                description = item["description"]
-                flat_outline.append({"title": title, "description": description})
+                writing_prompt = item["writing_prompt"]
+                flat_outline.append({"title": title, "writing_prompt": writing_prompt})
         else:
             flat_outline.append(section)
     return flat_outline
@@ -85,7 +96,7 @@ def process_outline(outline):
     flat_outline = flatten_outline(outline)
     script = []
     for section in flat_outline:
-        print(section["title"])
+        print(f"title: {section['title']}\nwriting_prompt: {section['writing_prompt']}")
         section_script = get_section_script(video_title, script, section)
         print(json.dumps(section_script, indent=2, ensure_ascii=False))
         script.extend(section_script)
@@ -101,21 +112,29 @@ outline = get_outline(video_topic)
 # Print the outline
 print(json.dumps(outline, indent=2, ensure_ascii=False))
 
+# Save the outline
+output_folder = OutputFolder("long_videos", outline["title"])
+with open(output_folder.path / "outline.json", "w") as f:
+    json.dump(outline, f, indent=2, ensure_ascii=False)
+
 # Process the outline into a script
 script = process_outline(outline)
 
 # Save the script
-output_folder = OutputFolder("long_videos", outline["title"])
 with open(output_folder.path / "script.json", "w") as f:
     json.dump(script, f, indent=2, ensure_ascii=False)
 
 # Generate the images and voiceovers
 for i, segment in enumerate(script):
-    image_description = segment["image_description"]
-    generate_image(image_description, "1024x1024", output_folder.path, f"{i:03}.png")
-    voiceover = segment["voiceover"]
-    generate_voice_clip(voiceover, "alloy", output_folder.path, f"{i:03}.mp3")
-
+    if isinstance(segment, dict):
+        image_description = segment.get("image_description")
+        if image_description:
+            generate_image(image_description, "1024x1024", output_folder.path, f"{i:03}.png")
+        voiceover = segment.get("voiceover")
+        if voiceover:
+            generate_voice_clip(voiceover, "alloy", output_folder.path, f"{i:03}.mp3")
+    else:
+        print(f"Warning: segment {i} is not a dictionary! Skipping...")
 # Create the video
 video_path = f"{output_folder.path}/video.mp4"
 create_video_from_clips(output_folder.path, video_path)

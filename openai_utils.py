@@ -11,7 +11,6 @@ client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 
 def get_json_video_script(script):
-    script = dedent(script)
     system_message = """Transform the script into a structured json output with the keys 'title' and 'script'.
     Each section of voiceover should be accompanied by a unique image related to the voiceover.
     The final result is a video with voiceover and images.

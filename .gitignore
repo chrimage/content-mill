@@ -9,5 +9,8 @@ haikus/
 scripted_videos/
 roundtable/
 long_videos/
+scripted/
+venv/
+.venv/
 *.pyc
 client_secrets.json
