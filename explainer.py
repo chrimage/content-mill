@@ -16,8 +16,8 @@ from video_utils import create_video_from_clips
 dotenv.load_dotenv()
 
 # set up the openai client
-
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 # We're going to use OpenAI Chat Completions API to make a explainer video.
 
@@ -27,7 +27,7 @@ topic = input("What topic should the AI make a explainer about?")
 
 # prompt the AI for explainer script in json format
 
-response = client.chat.completions.create(
+response = openai_client.chat.completions.create(
     model="gpt-4-turbo-preview",
     response_format={"type": "json_object"},
     messages=[
@@ -85,7 +85,7 @@ for i, voiceover in enumerate(voiceovers):
     # valid voice names are alloy, echo, fable, onyx, nova, and shimmer
     # choose a random voice
     voice = random.choice(["alloy", "echo", "fable", "onyx", "nova", "shimmer"])
-    response = client.audio.speech.create(
+    response = openai_client.audio.speech.create(
         model="tts-1",
         voice=voice,
         input=voiceover,
@@ -103,7 +103,7 @@ for i, image_description in enumerate(image_descriptions):
     print(f"Processing image {i} of {len(image_descriptions)}")
     # print the image description
     print(image_description)
-    response = client.images.generate(
+    response = openai_client.images.generate(
         model="dall-e-3",
         prompt=image_description,
         size="1024x1024",

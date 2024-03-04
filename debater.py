@@ -16,7 +16,8 @@ dotenv.load_dotenv()
 
 # set up the openai client
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 image_size = "1024x1024"
 
@@ -32,7 +33,7 @@ class DebateParticipant(ABC):
         return f"You are {self.name}. You are debating as a {self.role} of {self.topic}. Your response should be a json object with the keys 'speaker', 'content', and 'image_description'. The speaker should be your name. The content should be your response. The image_description should be a description of an image to accompany your statement. The image should be related to the topic of the debate. Avoid using images of the debate setting or the debaters. Avoid using images of celebrities or public figures. Our text to image system uses a content filter, so avoid anything inappropriate. Avoid anything offensive. Avoid directly mentioning anything that is copyrighted in image_description. Do not use the names of any copyrighted works in image_description."
 
     def get_response(self, debate_messages, instruction=""):
-        response = client.chat.completions.create(
+        response = openai_client.chat.completions.create(
             model=self.model,
             response_format={"type": "json_object"},
             messages=[
@@ -151,7 +152,7 @@ for i, message in enumerate(debate_messages):
        voice = "fable"
    else:
        voice = "alloy"
-   response = client.audio.speech.create(
+   response = openai_client.audio.speech.create(
        model="tts-1",
        voice=voice,
        input=message["content"],
@@ -166,7 +167,7 @@ for i, message in enumerate(debate_messages):
     image_description = message["image_description"]
     print(image_description)
     try:
-        response = client.images.generate(
+        response = openai_client.images.generate(
             model="dall-e-3",
             prompt=f"{image_description}",
             size=image_size,

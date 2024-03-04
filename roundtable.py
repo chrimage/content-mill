@@ -22,12 +22,13 @@ dotenv.load_dotenv()
 
 # set up the openai client
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 # Define a generic function to get json from GPT-4
 def get_json_list_from_gpt4(prompt, temperature="1.0"):
-    response = client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model="gpt-4-turbo-preview",
         response_format={"type": "json_object"},
         messages=[
@@ -63,7 +64,7 @@ class RoundtableParticipant:
         return f"You are {self.name}. You are participating in a roundtable discussion as a {self.role} on the topic of {self.topic}. Your response should be a json object with the keys 'speaker', 'content', 'next_speaker', and 'image_description'. The speaker should be your name. next_speaker should be the name of the person who should speak next. The content should be your response. The image_description should be a description of an image to accompany your statement. The image should be related to the topic of the roundtable discussion. Avoid using images of the roundtable discussion setting or the participants. Avoid using images of celebrities or public figures. Our text to image system uses a content filter, so avoid anything inappropriate. Avoid anything offensive. Avoid directly mentioning anything that is copyrighted in image_description. Do not use the names of any copyrighted works in image_description."
 
     def get_response(self, messages, instruction=""):
-        response = client.chat.completions.create(
+        response = openai_client.chat.completions.create(
             model=self.model,
             response_format={"type": "json_object"},
             messages=[
@@ -252,11 +253,11 @@ class RoundtableDiscussion:
         self.save_transcript(self.messages, self.roundtable_discussion_dir / "transcript.json")
 
 
-def generate_image(client, description, directory, image_number, image_size="1024x1024"):
+def generate_image(openai_client, description, directory, image_number, image_size="1024x1024"):
     """
     Generate an image using the DALL-E model and save it to a specified directory.
 
-    :param client: The OpenAI client object.
+    :param openai_client: The OpenAI client object.
     :param description: The description to generate the image.
     :param directory: The directory where the image will be saved.
     :param image_number: The sequential number of the image for file naming.
@@ -264,7 +265,7 @@ def generate_image(client, description, directory, image_number, image_size="102
     :return: None
     """
     try:
-        response = client.images.generate(
+        response = openai_client.images.generate(
             model="dall-e-3",
             prompt=description,
             size=image_size,
@@ -279,11 +280,11 @@ def generate_image(client, description, directory, image_number, image_size="102
     except Exception as e:
         print(f"Image generation failed: {e}")
 
-def generate_voice_clip(client, speaker, voice, content, output_directory, clip_number):
+def generate_voice_clip(openai_client, speaker, voice, content, output_directory, clip_number):
     """
     Generate a voice clip using the specified voice and save it to the specified directory.
 
-    :param client: The OpenAI client object.
+    :param openai_client: The OpenAI client object.
     :param speaker: The name of the speaker.
     :param voice: The voice to be used for text-to-speech.
     :param content: The content to be converted into speech.
@@ -292,7 +293,7 @@ def generate_voice_clip(client, speaker, voice, content, output_directory, clip_
     :return: None
     """
     try:
-        response = client.audio.speech.create(
+        response = openai_client.audio.speech.create(
             model="tts-1",
             voice=voice,
             input=content,
@@ -328,7 +329,7 @@ for i, message in enumerate(roundtable.messages):
     speaker = message["speaker"]
     voice = participant_voices[speaker]
     content = message["content"]
-    generate_voice_clip(client, speaker, voice, content, roundtable_discussion_dir, i)
+    generate_voice_clip(openai_client, speaker, voice, content, roundtable_discussion_dir, i)
 
 
 # iterate through the conversation and create an image for each message.
@@ -336,7 +337,7 @@ for i, message in enumerate(roundtable.messages):
 for i, message in enumerate(roundtable.messages):
     image_description = message["image_description"]
     print(image_description)
-    generate_image(client, image_description, roundtable_discussion_dir, i)
+    generate_image(openai_client, image_description, roundtable_discussion_dir, i)
 
 # Create a video from the images and audio
 video_output_path = f"{roundtable_discussion_dir}/roundtable.mp4"

@@ -8,7 +8,8 @@ from video_utils import create_video_from_clips
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 OUTLINER_MODEL = "gpt-4-turbo-preview"
 
@@ -24,7 +25,6 @@ If there are subsections, the object should have a 'title' and 'items' key.
 The 'items' key should have a list of objects with a 'title' and 'writing_prompt' key.
 'title' is the title of the section. 'writing_prompt' should be a writing prompt for the section."""
 
-
 SECTION_MODEL = "gpt-4-turbo-preview"
 
 SECTION_SYSTEM_MESSAGE = """Your job is to write a script for a portion of a YouTube video.
@@ -35,9 +35,8 @@ Each object in 'section' should have the keys 'voiceover' and 'image_description
 'voiceover' should be the voiceover for the section. 'image_description' should be a description of the image for the section.
 Do not wrap up the video unless the section is titled 'Conclusion' or 'Outro'."""
 
-
 def get_outline(topic: str) -> dict:
-    response = client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model=OUTLINER_MODEL,
         messages=[
             {
@@ -56,9 +55,8 @@ def get_outline(topic: str) -> dict:
     outline = json.loads(outline)
     return outline
 
-
 def get_section_script(video_title: str, script: list, section: dict) -> list:
-    response = client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model=SECTION_MODEL,
         messages=[
             {
@@ -77,7 +75,6 @@ def get_section_script(video_title: str, script: list, section: dict) -> list:
     section_script = section_script["section"]
     return section_script
 
-
 def flatten_outline(outline:dict) -> list:
     flat_outline: list = []
     for section in outline["sections"]:
@@ -90,7 +87,6 @@ def flatten_outline(outline:dict) -> list:
             flat_outline.append(section)
     return flat_outline
 
-
 def process_outline(outline: dict) -> list:
     video_title = outline["title"]
     flat_outline = flatten_outline(outline)
@@ -101,7 +97,6 @@ def process_outline(outline: dict) -> list:
         print(json.dumps(section_script, indent=2, ensure_ascii=False))
         script.extend(section_script)
     return script
-
 
 # Prompt the user for a topic
 video_topic = input("What is the topic of your video? ")

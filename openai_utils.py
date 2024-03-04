@@ -7,7 +7,8 @@ import requests
 from pathlib import Path
 load_dotenv()
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 def structure_video_script(script):
@@ -21,7 +22,7 @@ def structure_video_script(script):
     - Avoid images of 'The Host', 'The YouTuber', 'The Narrator', or 'The AI'.
     Remember, you are part of a "Text to Video" pipeline.
     Your output will be fed into a text-to-speech generator and a text-to-image generator."""
-    response = client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model="gpt-4-0125-preview",
         response_format={"type": "json_object"},
         messages=[
@@ -41,7 +42,7 @@ def structure_video_script(script):
 
 def generate_voice_clip(input, voice, output_folder, filename):
     speech_file_path = output_folder / filename
-    with client.audio.speech.with_streaming_response.create(
+    with openai_client.audio.speech.with_streaming_response.create(
         model="tts-1",
         voice=voice,
         input=input
@@ -52,7 +53,7 @@ def generate_image(prompt, size, output_folder, filename, max_retries=3):
     retries = 0
     while retries < max_retries:
         try:
-            response = client.images.generate(
+            response = openai_client.images.generate(
                 model="dall-e-3",
                 prompt=prompt,
                 size=size,
@@ -76,7 +77,7 @@ def generate_image(prompt, size, output_folder, filename, max_retries=3):
                 return  # Exit the function if the maximum number of retries is reached
 
 def adjust_prompt(prompt):
-    response = client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model="gpt-4-turbo-preview",
         messages=[
             {

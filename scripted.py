@@ -18,7 +18,8 @@ dotenv.load_dotenv()
 
 # set up the openai client
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Steps
 # 1. input a draft script for a video
