@@ -36,7 +36,7 @@ Each object in 'section' should have the keys 'voiceover' and 'image_description
 Do not wrap up the video unless the section is titled 'Conclusion' or 'Outro'."""
 
 
-def get_outline(topic):
+def get_outline(topic: str) -> dict:
     response = client.chat.completions.create(
         model=OUTLINER_MODEL,
         messages=[
@@ -57,7 +57,7 @@ def get_outline(topic):
     return outline
 
 
-def get_section_script(video_title, script, section):
+def get_section_script(video_title: str, script: list, section: dict) -> list:
     response = client.chat.completions.create(
         model=SECTION_MODEL,
         messages=[
@@ -78,8 +78,8 @@ def get_section_script(video_title, script, section):
     return section_script
 
 
-def flatten_outline(outline):
-    flat_outline = []
+def flatten_outline(outline:dict) -> list:
+    flat_outline: list = []
     for section in outline["sections"]:
         if "items" in section:
             for item in section["items"]:
@@ -91,10 +91,10 @@ def flatten_outline(outline):
     return flat_outline
 
 
-def process_outline(outline):
+def process_outline(outline: dict) -> list:
     video_title = outline["title"]
     flat_outline = flatten_outline(outline)
-    script = []
+    script: list = []
     for section in flat_outline:
         print(f"title: {section['title']}\nwriting_prompt: {section['writing_prompt']}")
         section_script = get_section_script(video_title, script, section)

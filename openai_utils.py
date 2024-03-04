@@ -10,7 +10,7 @@ load_dotenv()
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 
-def get_json_video_script(script):
+def structure_video_script(script):
     system_message = """Transform the script into a structured json output with the keys 'title' and 'script'.
     Each section of voiceover should be accompanied by a unique image related to the voiceover.
     The final result is a video with voiceover and images.
@@ -48,6 +48,33 @@ def generate_voice_clip(input, voice, output_folder, filename):
     ) as response:
         response.stream_to_file(speech_file_path)
 
+def generate_image(prompt, size, output_folder, filename, max_retries=3):
+    retries = 0
+    while retries < max_retries:
+        try:
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size=size,
+                quality="standard",
+                n=1
+            )
+            image_url = response.data[0].url
+            image = requests.get(image_url)
+
+            # save the image
+            with open(output_folder / filename, "wb") as f:
+                f.write(image.content)
+            return  # Exit the function if the image is successfully generated
+        except:
+            retries += 1
+            if retries < max_retries:
+                new_prompt = adjust_prompt(prompt)
+                prompt = new_prompt
+            else:
+                print(f"Failed to generate image after {max_retries} retries. Skipping image generation.")
+                return  # Exit the function if the maximum number of retries is reached
+
 def adjust_prompt(prompt):
     response = client.chat.completions.create(
         model="gpt-4-turbo-preview",
@@ -65,22 +92,3 @@ def adjust_prompt(prompt):
     new_prompt = response.choices[0].message.content
     return new_prompt
     
-
-def generate_image(prompt, size, output_folder, filename):
-    try:
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size=size,
-            quality="standard",
-            n=1
-        )
-        image_url = response.data[0].url
-        image = requests.get(image_url)
-
-        # save the image
-        with open(output_folder / filename, "wb") as f:
-            f.write(image.content)
-    except:
-        new_prompt = adjust_prompt(prompt)
-        generate_image(new_prompt, size, output_folder, filename)

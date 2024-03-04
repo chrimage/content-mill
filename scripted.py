@@ -10,7 +10,7 @@ import uuid
 import random
 import pathlib
 from video_utils import create_video_from_clips
-from openai_utils import get_json_video_script, generate_voice_clip, generate_image
+from openai_utils import structure_video_script, generate_voice_clip, generate_image
 from folder_utils import OutputFolder
 
 # load environment variables
@@ -39,7 +39,7 @@ print(draft_script)
 
 # prompt the AI for a revised script
 
-final_script = get_json_video_script(draft_script)
+final_script = structure_video_script(draft_script)
 
 title = final_script["title"]
 
